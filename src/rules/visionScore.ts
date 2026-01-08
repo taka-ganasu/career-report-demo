@@ -231,27 +231,28 @@ function calcWillScore(
 
 /**
  * スロット別トータルスコアを計算
+ * ※ baseWeightsは割合の説明用であり、計算には使用しない
+ * ※ スロット傾斜のみを適用
  */
 function calcSlotTotals(
   careerRaw: number,
   aptitudeRaw: number,
   willRaw: number,
-  baseWeights: Weights['base'],
   slotWeights: SlotWeights
 ): { slot1: number; slot2: number; slot3: number } {
   return {
     slot1:
-      careerRaw * baseWeights.career * slotWeights.slot1.career +
-      aptitudeRaw * baseWeights.aptitude * slotWeights.slot1.aptitude +
-      willRaw * baseWeights.will * slotWeights.slot1.will,
+      careerRaw * slotWeights.slot1.career +
+      aptitudeRaw * slotWeights.slot1.aptitude +
+      willRaw * slotWeights.slot1.will,
     slot2:
-      careerRaw * baseWeights.career * slotWeights.slot2.career +
-      aptitudeRaw * baseWeights.aptitude * slotWeights.slot2.aptitude +
-      willRaw * baseWeights.will * slotWeights.slot2.will,
+      careerRaw * slotWeights.slot2.career +
+      aptitudeRaw * slotWeights.slot2.aptitude +
+      willRaw * slotWeights.slot2.will,
     slot3:
-      careerRaw * baseWeights.career * slotWeights.slot3.career +
-      aptitudeRaw * baseWeights.aptitude * slotWeights.slot3.aptitude +
-      willRaw * baseWeights.will * slotWeights.slot3.will
+      careerRaw * slotWeights.slot3.career +
+      aptitudeRaw * slotWeights.slot3.aptitude +
+      willRaw * slotWeights.slot3.will
   };
 }
 
@@ -274,7 +275,6 @@ export function calcAllVisionScores(
       career.score,
       aptitude.score,
       will.score,
-      weights.base,
       slotWeights
     );
 
