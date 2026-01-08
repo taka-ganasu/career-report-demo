@@ -1,0 +1,3 @@
+user_id,career_job_id_longest,career_industry_id_longest,personal_job_id_top1,personal_industry_id_top1,personal_role,personal_strength_type_id_top1,q1_choice_no,q2_choice_no,q3_choice_no,q4_choice_no
+u1,35,29,6,1,player,3,4,4,1,4
+u2,44,32,18,6,manager,5,4,4,2,2
