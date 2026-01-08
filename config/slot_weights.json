@@ -1,0 +1,17 @@
+{
+  "slot1": {
+    "career": 2.0,
+    "aptitude": 1.0,
+    "will": 0.5
+  },
+  "slot2": {
+    "career": 0.5,
+    "aptitude": 2.0,
+    "will": 1.0
+  },
+  "slot3": {
+    "career": 0.5,
+    "aptitude": 1.0,
+    "will": 2.0
+  }
+}
