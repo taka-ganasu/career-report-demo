@@ -42,7 +42,7 @@ interface ScoreResult {
  */
 function calcCareerScore(
   axis: Axis,
-  visionId: string,
+  visionId: number,
   relTables: RelationTables
 ): ScoreResult {
   const details: RawDetail[] = [];
@@ -88,7 +88,7 @@ function calcCareerScore(
  */
 function calcAptitudeScore(
   axis: Axis,
-  visionId: string,
+  visionId: number,
   relTables: RelationTables
 ): ScoreResult {
   const details: RawDetail[] = [];
@@ -159,7 +159,7 @@ function calcAptitudeScore(
  */
 function calcWillScore(
   axis: Axis,
-  visionId: string,
+  visionId: number,
   relTables: RelationTables,
   qWeights: Weights['will_q']
 ): ScoreResult {
@@ -291,6 +291,60 @@ export function calcAllVisionScores(
         will: will.details
       },
       slot_totals: slotTotals
+    };
+  });
+}
+
+/**
+ * フラットスコア結果の型
+ */
+export interface FlatScoreResult {
+  vision_id: number;
+  total_score: number;
+  raw: {
+    career: number;
+    aptitude: number;
+    will: number;
+  };
+  raw_details: {
+    career: RawDetail[];
+    aptitude: RawDetail[];
+    will: RawDetail[];
+  };
+}
+
+/**
+ * フラットスコア計算（slot_weightsなし、素点を単純加算）
+ */
+export function calcFlatVisionScores(
+  axis: Axis,
+  dictVisions: DictVision[],
+  relTables: RelationTables
+): FlatScoreResult[] {
+  // Q1〜Q4の重みは全て1.0（フラット）
+  const flatQWeights = { q1: 1, q2: 1, q3: 1, q4: 1 };
+
+  return dictVisions.map(vision => {
+    const career = calcCareerScore(axis, vision.vision_id, relTables);
+    const aptitude = calcAptitudeScore(axis, vision.vision_id, relTables);
+    const will = calcWillScore(axis, vision.vision_id, relTables, flatQWeights);
+
+    // 素点を単純加算
+    const totalScore = career.score + aptitude.score + will.score;
+
+    return {
+      vision_id: vision.vision_id,
+      total_score: totalScore,
+      raw: {
+        career: career.score,
+        aptitude: aptitude.score,
+        will: will.score
+      },
+      raw_details: {
+        career: career.details,
+        aptitude: aptitude.details,
+        will: will.details
+      }
     };
   });
 }

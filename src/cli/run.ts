@@ -1,9 +1,10 @@
-import { resolve } from 'path';
+import { resolve, join } from 'path';
+import { mkdirSync, writeFileSync } from 'fs';
 import { loadCsvById, loadCsv } from '../loaders/csv.js';
 import { loadWeights, loadSlotWeights } from '../loaders/config.js';
 import { buildAxisFromInputRow } from '../domain/axis.js';
-import { calcAllVisionScores, type RelationTables } from '../rules/visionScore.js';
-import { selectTop3BySlots } from '../rules/visionSlots.js';
+import { calcAllVisionScores, calcFlatVisionScores, type RelationTables } from '../rules/visionScore.js';
+import { selectTop3BySlots, selectFlatTop3, type FlatTop3Result } from '../rules/visionSlots.js';
 import {
   writeDebugAxis,
   writeDebugScores,
@@ -32,7 +33,8 @@ import type {
   MasterTargetIndustry,
   MasterStrengthType,
   MasterAdditionalQuestion,
-  MasterVision
+  MasterVision,
+  Axis
 } from '../types/index.js';
 
 // =========================
@@ -42,12 +44,14 @@ import type {
 interface CliArgs {
   userId: string;
   mode: 'csv' | 'interactive';
+  flat: boolean;
 }
 
 function parseArgs(): CliArgs {
   const args = process.argv.slice(2);
   let userId = 'u1';
   let mode: 'csv' | 'interactive' = 'csv';
+  let flat = false;
 
   for (const arg of args) {
     if (arg.startsWith('--user_id=')) {
@@ -56,10 +60,12 @@ function parseArgs(): CliArgs {
       mode = 'interactive';
     } else if (arg === '--mode=csv') {
       mode = 'csv';
+    } else if (arg === '--flat' || arg === '-f') {
+      flat = true;
     }
   }
 
-  return { userId, mode };
+  return { userId, mode, flat };
 }
 
 // =========================
@@ -67,8 +73,8 @@ function parseArgs(): CliArgs {
 // =========================
 
 async function main() {
-  const { userId, mode } = parseArgs();
-  console.log(`\n[開始] ユーザーID: ${userId} / モード: ${mode}\n`);
+  const { userId, mode, flat } = parseArgs();
+  console.log(`\n[開始] ユーザーID: ${userId} / モード: ${mode}${flat ? ' / フラットモード' : ''}\n`);
 
   const baseDir = resolve(import.meta.dirname, '../..');
   const dataDir = `${baseDir}/data`;
@@ -160,6 +166,34 @@ async function main() {
 
   console.log('[Step 5] 将来像スコア計算...');
 
+  // フラットモードの場合は別処理
+  if (flat) {
+    const flatScores = calcFlatVisionScores(axis, dictVisions, relTables);
+    const flatTop3 = selectFlatTop3(flatScores);
+
+    console.log('[Step 6] フラットスコアでTop3選定...');
+
+    // フラット結果をコンソール出力
+    console.log('\n[完了]\n');
+    console.log('='.repeat(60));
+    console.log('【フラットスコア Top5】\n');
+
+    for (const item of flatTop3) {
+      const vision = dictVisions.find(v => v.vision_id === item.vision_id);
+      const visionMaster = masterData.visions.find(v => v.vision_id === item.vision_id);
+      console.log(`${item.rank}位: [ID:${item.vision_id}] ${vision?.title || visionMaster?.vision_title || '不明'}`);
+      console.log(`    総合スコア: ${item.total_score}`);
+      console.log(`    内訳: 経歴=${item.raw.career}, 資質=${item.raw.aptitude}, 志向=${item.raw.will}`);
+      console.log('');
+    }
+
+    // 全スコアのデバッグ出力
+    writeFlatDebugScores(outDir, finalUserId, axis, flatScores, flatTop3, warnings, masterData, dictVisions);
+
+    console.log('='.repeat(60));
+    return;
+  }
+
   const visionScores = calcAllVisionScores(axis, dictVisions, relTables, weights, slotWeights);
 
   // =========================
@@ -187,6 +221,74 @@ async function main() {
   console.log('='.repeat(60));
   console.log(reportMd);
   console.log('='.repeat(60));
+}
+
+/**
+ * フラットモード用のデバッグ出力
+ */
+function writeFlatDebugScores(
+  outDir: string,
+  userId: string,
+  axis: Axis,
+  flatScores: { vision_id: number; total_score: number; raw: { career: number; aptitude: number; will: number } }[],
+  top3: FlatTop3Result[],
+  warnings: string[],
+  masterData: MasterData,
+  dictVisions: DictVision[]
+) {
+  const output = {
+    user_id: userId,
+    mode: 'flat',
+    generated_at: new Date().toISOString(),
+    description: 'slot_weightsを使用せず、素点を単純加算したフラットスコア',
+    inputs: {
+      career_job_id: axis.career.job_id,
+      career_job_name: masterData.jobs.find(j => j.job_id === axis.career.job_id)?.job_name || '',
+      career_industry_id: axis.career.industry_id,
+      career_industry_name: masterData.industries.find(i => i.industry_id === axis.career.industry_id)?.industry_name || '',
+      target_job_id: axis.aptitude.target_job_id,
+      target_job_name: masterData.targetJobs.find(j => j.target_job_id === axis.aptitude.target_job_id)?.target_job_name || '',
+      target_industry_id: axis.aptitude.target_industry_id,
+      target_industry_name: masterData.targetIndustries.find(i => i.target_industry_id === axis.aptitude.target_industry_id)?.target_industry_name || '',
+      role: axis.aptitude.role,
+      strength_type_id: axis.aptitude.strength_type_id,
+      strength_type_name: masterData.strengthTypes.find(s => s.strength_type_id === axis.aptitude.strength_type_id)?.strength_type_name || '',
+      q1: axis.will.q1,
+      q2: axis.will.q2,
+      q3: axis.will.q3,
+      q4: axis.will.q4
+    },
+    top5: top3.map(item => {
+      const vision = dictVisions.find(v => v.vision_id === item.vision_id);
+      const visionMaster = masterData.visions.find(v => v.vision_id === item.vision_id);
+      return {
+        rank: item.rank,
+        vision_id: item.vision_id,
+        vision_title: vision?.title || visionMaster?.vision_title || '',
+        total_score: item.total_score,
+        raw: item.raw
+      };
+    }),
+    all_scores: flatScores
+      .sort((a, b) => b.total_score - a.total_score)
+      .map((item, index) => {
+        const vision = dictVisions.find(v => v.vision_id === item.vision_id);
+        const visionMaster = masterData.visions.find(v => v.vision_id === item.vision_id);
+        return {
+          rank: index + 1,
+          vision_id: item.vision_id,
+          vision_title: vision?.title || visionMaster?.vision_title || '',
+          total_score: item.total_score,
+          raw: item.raw
+        };
+      }),
+    warnings
+  };
+
+  const outPath = join(outDir, `${userId}.debug.flat.json`);
+  mkdirSync(outDir, { recursive: true });
+  writeFileSync(outPath, JSON.stringify(output, null, 2), 'utf-8');
+  console.log(`[出力] ${outPath}`);
 }
 
 main().catch(err => {

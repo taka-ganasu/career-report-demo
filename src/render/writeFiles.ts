@@ -171,7 +171,7 @@ export function buildQ5Result(
   dictVisions: DictVision[]
 ): Q5Result {
   const buildVisionOutput = (
-    visionId: string,
+    visionId: number,
     score: number
   ): VisionOutput => {
     const vision = dictVisions.find(v => v.vision_id === visionId);

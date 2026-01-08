@@ -2,6 +2,7 @@ import type {
   VisionScoreBreakdown,
   SlotSelection
 } from '../types/index.js';
+import type { FlatScoreResult } from './visionScore.js';
 
 export interface SlotSelectionResult {
   slot1: SlotSelection;
@@ -110,3 +111,41 @@ export function selectTop3BySlots(
     }
   };
 }
+
+/**
+ * フラットスコア結果の型（Top5用）
+ */
+export interface FlatTopResult {
+  rank: number;
+  vision_id: number;
+  total_score: number;
+  raw: {
+    career: number;
+    aptitude: number;
+    will: number;
+  };
+}
+
+// 後方互換性のためのエイリアス
+export type FlatTop3Result = FlatTopResult;
+
+/**
+ * フラットスコアでTop5を選定（重複なし、単純にスコア順）
+ */
+export function selectFlatTop5(
+  flatScores: FlatScoreResult[]
+): FlatTopResult[] {
+  // スコア降順でソート
+  const sorted = [...flatScores].sort((a, b) => b.total_score - a.total_score);
+
+  // 上位5件を返す
+  return sorted.slice(0, 5).map((item, index) => ({
+    rank: index + 1,
+    vision_id: item.vision_id,
+    total_score: item.total_score,
+    raw: item.raw
+  }));
+}
+
+// 後方互換性のためのエイリアス
+export const selectFlatTop3 = selectFlatTop5;

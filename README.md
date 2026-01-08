@@ -94,6 +94,23 @@ npm run demo -- --user_id=u1
 npm run demo -- --user_id=u2
 ```
 
+### フラットモード
+
+slot_weightsを使用せず、素点を単純加算してTop5を表示します。
+スコアリングロジックの検証やデバッグに便利です。
+
+```bash
+# フラットモードで実行
+npm run demo -- --flat
+npm run demo -- -f
+
+# ユーザー指定と組み合わせ
+npm run demo -- --user_id=u1 --flat
+
+# インタラクティブ + フラットモード
+npm run demo -- -i --flat
+```
+
 ## 出力ファイル
 
 | ファイル | 説明 |
@@ -102,6 +119,7 @@ npm run demo -- --user_id=u2
 | `out/{user_id}.report.json` | レポート（JSON） |
 | `out/{user_id}.debug.axis.json` | 軸データ + 使用した設定 |
 | `out/{user_id}.debug.scores.json` | スコア内訳 + 選定ログ |
+| `out/{user_id}.debug.flat.json` | フラットモード時のスコア内訳（全件ランキング付き） |
 
 ## スコア計算ロジック
 
