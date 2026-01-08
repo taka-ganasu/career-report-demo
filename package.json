@@ -9,6 +9,7 @@
     "start": "node dist/cli/run.js"
   },
   "dependencies": {
+    "@inquirer/prompts": "^8.1.0",
     "csv-parse": "^5.5.0"
   },
   "devDependencies": {

@@ -2,6 +2,23 @@
 
 将来像（Q5）の妥当性検証に特化したシンプルな実装です。
 
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/taka-ganasu/career-report-demo?quickstart=1)
+
+## クイックスタート（GitHub Codespaces）
+
+1. 上の「Open in GitHub Codespaces」ボタンをクリック
+2. Codespaceが起動したら、ターミナルで以下を実行:
+
+```bash
+# インタラクティブモードで実行（おすすめ）
+npm run demo -- -i
+
+# または、CSVモードで実行
+npm run demo
+```
+
+3. 質問に回答すると、キャリアレポートが生成されます
+
 ## 概要
 
 - **スコープ**: 将来像（Q5で3つ出す）の選定のみ
@@ -55,6 +72,18 @@ npm install
 ```
 
 ## 実行
+
+### インタラクティブモード（おすすめ）
+
+対話形式で各項目を選択できます。
+
+```bash
+npm run demo -- -i
+```
+
+### CSVモード
+
+事前に用意したCSVデータで実行します。
 
 ```bash
 # デモ実行（デフォルト: u1）
