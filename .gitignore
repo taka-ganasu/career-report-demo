@@ -1,0 +1,15 @@
+# Dependencies
+node_modules/
+
+# Build output
+out/
+
+# Lock file (optional - some projects commit this)
+# package-lock.json
+
+# OS files
+.DS_Store
+
+# IDE
+.idea/
+.vscode/
