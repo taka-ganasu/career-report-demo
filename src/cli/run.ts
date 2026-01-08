@@ -196,6 +196,11 @@ async function main() {
 
   const visionScores = calcAllVisionScores(axis, dictVisions, relTables, weights, slotWeights);
 
+  // フラットスコアも常に計算してデバッグ出力
+  const flatScores = calcFlatVisionScores(axis, dictVisions, relTables);
+  const flatTop5 = selectFlatTop3(flatScores);
+  writeFlatDebugScores(outDir, finalUserId, axis, flatScores, flatTop5, warnings, masterData, dictVisions);
+
   // =========================
   // Step 6: スロット別傾斜適用
   // =========================
