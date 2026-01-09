@@ -108,7 +108,7 @@ npm run demo -- -f
 npm run demo -- --user_id=u1 --flat
 
 # インタラクティブ + フラットモード
-npm run demo -- -i --flat
+npm run demo -- -i --f
 ```
 
 ## 出力ファイル
